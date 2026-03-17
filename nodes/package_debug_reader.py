@@ -1,19 +1,18 @@
 import json
-import logging
 import os
 
 import httpx
 
 from gen.axiom_official_axiom_agent_messages_messages_pb2 import TestResult
+from gen.axiom_logger import AxiomLogger, AxiomSecrets
 
-logger = logging.getLogger(__name__)
 
 
-def handle(result: TestResult, context) -> TestResult:
+def package_debug_reader(log: AxiomLogger, secrets: AxiomSecrets, input: TestResult) -> TestResult:
     """Fetch the debug event stream and attach it to the TestResult output_json."""
 
-    if not result.session_id:
-        return result
+    if not input.session_id:
+        return input
 
     ingress_url = os.environ.get("INGRESS_URL", "http://axiom-ingress:80")
     axiom_api_key = os.environ.get("AXIOM_API_KEY", "")
@@ -22,7 +21,7 @@ def handle(result: TestResult, context) -> TestResult:
     try:
         resp = httpx.get(
             f"{ingress_url}/v1/debug-events",
-            params={"session_id": result.session_id, "limit": "100"},
+            params={"session_id": input.session_id, "limit": "100"},
             headers={
                 "Authorization": f"Bearer {axiom_api_key}",
                 "X-Tenant-Id": tenant_id,
@@ -32,10 +31,10 @@ def handle(result: TestResult, context) -> TestResult:
         if resp.status_code == 200:
             events = resp.json()
             enriched = TestResult()
-            enriched.CopyFrom(result)
+            enriched.CopyFrom(input)
             enriched.output_json = json.dumps({"debug_events": events})
             return enriched
     except Exception as e:
-        logger.warning(f"Failed to fetch debug events: {e}")
+        log.warning(f"Failed to fetch debug events: {e}")
 
-    return result
+    return input

@@ -6,29 +6,25 @@ author: Axiom Official
 license: MIT
 nodes:
     - name: PackageDebugReader
-      description: Enriches a TestResult by fetching its debug event stream from the ingress and attaching the events as JSON in the output field.
-      input: TestResult
-      output: TestResult
+      description: Enriches the context by fetching the debug event stream for the test execution and attaching the events as JSON.
+      input: PackageBuildContext
+      output: PackageBuildContext
     - name: PackageTraceAnalyser
-      description: Uses the LLM to analyse the enriched debug trace and determine root cause of the failure.
-      input: TestResult
-      output: AnalysisResult
+      description: Uses the LLM to analyse the debug trace, populates has_error, fix_instructions, and error_summary.
+      input: PackageBuildContext
+      output: PackageBuildContext
       required_secrets:
         - ANTHROPIC_API_KEY
     - name: PackageFixApplier
-      description: Routes fix instructions to the appropriate package builder sub-flow based on the analysis.
-      input: AnalysisResult
+      description: Routes fix instructions to the appropriate package builder sub-flow and returns an AgentProgress with the result.
+      input: PackageBuildContext
       output: AgentProgress
 imports:
     - package: axiom-official/axiom-agent-messages
       version: 0.1.0
       messages:
-        - TestResult
-        - AnalysisResult
-        - AgentRequest
-        - PackageSpec
-        - AgentProgress
         - NodeSpec
-        - PublishResult
-        - FlowSpec
-        - CompileResult
+        - PackageBuildContext
+        - AgentProgress
+        - AgentRequest
+        - FlowBuildContext

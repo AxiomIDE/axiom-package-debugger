@@ -3,13 +3,12 @@ import os
 
 import httpx
 
-from gen.axiom_official_axiom_agent_messages_messages_pb2 import TestResult
+from gen.axiom_official_axiom_agent_messages_messages_pb2 import PackageBuildContext
 from gen.axiom_logger import AxiomLogger, AxiomSecrets
 
 
-
-def package_debug_reader(log: AxiomLogger, secrets: AxiomSecrets, input: TestResult) -> TestResult:
-    """Fetch the debug event stream and attach it to the TestResult output_json."""
+def package_debug_reader(log: AxiomLogger, secrets: AxiomSecrets, input: PackageBuildContext) -> PackageBuildContext:
+    """Fetch the debug event stream and attach it to the context for analysis."""
 
     if not input.session_id:
         return input
@@ -30,11 +29,9 @@ def package_debug_reader(log: AxiomLogger, secrets: AxiomSecrets, input: TestRes
         )
         if resp.status_code == 200:
             events = resp.json()
-            enriched = TestResult()
-            enriched.CopyFrom(input)
-            enriched.output_json = json.dumps({"debug_events": events})
-            return enriched
+            # Attach the raw debug events as JSON in fix_instructions for downstream analysis.
+            input.fix_instructions = json.dumps({"debug_events": events})
     except Exception as e:
-        log.warning(f"Failed to fetch debug events: {e}")
+        log.warn(f"Failed to fetch debug events: {e}")
 
     return input

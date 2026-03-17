@@ -3,7 +3,7 @@ import os
 
 import anthropic
 
-from gen.axiom_official_axiom_agent_messages_messages_pb2 import TestResult, AnalysisResult
+from gen.axiom_official_axiom_agent_messages_messages_pb2 import PackageBuildContext
 from gen.axiom_logger import AxiomLogger, AxiomSecrets
 
 
@@ -11,20 +11,22 @@ SYSTEM_PROMPT = """You are an expert at diagnosing Axiom node failures from debu
 Identify the root cause and produce actionable fix instructions."""
 
 
-def package_trace_analyser(log: AxiomLogger, secrets: AxiomSecrets, input: TestResult) -> AnalysisResult:
-    if input.success:
-        return AnalysisResult(has_error=False, error_summary="No errors found")
+def package_trace_analyser(log: AxiomLogger, secrets: AxiomSecrets, input: PackageBuildContext) -> PackageBuildContext:
+    if input.test_success:
+        input.has_error = False
+        input.error_summary = "No errors found"
+        return input
 
     api_key = secrets.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_API_KEY", "")
     client = anthropic.Anthropic(api_key=api_key)
 
     debug_events = ""
-    if input.output_json:
+    if input.fix_instructions:
         try:
-            data = json.loads(input.output_json)
+            data = json.loads(input.fix_instructions)
             debug_events = json.dumps(data.get("debug_events", data), indent=2)[:4000]
         except Exception:
-            debug_events = input.output_json[:4000]
+            debug_events = input.fix_instructions[:4000]
 
     message = client.messages.create(
         model="claude-sonnet-4-5",
@@ -34,7 +36,7 @@ def package_trace_analyser(log: AxiomLogger, secrets: AxiomSecrets, input: TestR
             "role": "user",
             "content": f"""Analyse this package test failure:
 
-Error: {input.error}
+Error: {input.test_error}
 
 Debug trace:
 {debug_events or "(none)"}
@@ -43,9 +45,9 @@ Identify root cause and provide fix instructions."""
         }]
     )
 
-    return AnalysisResult(
-        has_error=True,
-        fix_instructions=message.content[0].text,
-        error_summary=input.error[:200] if input.error else "Unknown error",
-        iteration=1,
-    )
+    input.has_error = True
+    input.fix_instructions = message.content[0].text
+    input.error_summary = (input.test_error or "Unknown error")[:200]
+    input.iteration = input.iteration + 1
+
+    return input

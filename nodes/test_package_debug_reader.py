@@ -1,3 +1,5 @@
+from nodes.package_debug_reader import package_debug_reader
+
+
 def test_package_debug_reader_imports():
-    import nodes.package_debug_reader as m
-    assert hasattr(m, "package_debug_reader")
+    assert callable(package_debug_reader)

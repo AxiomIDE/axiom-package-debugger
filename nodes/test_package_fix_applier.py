@@ -1,3 +1,5 @@
+from nodes.package_fix_applier import package_fix_applier
+
+
 def test_package_fix_applier_imports():
-    import nodes.package_fix_applier as m
-    assert hasattr(m, "package_fix_applier")
+    assert callable(package_fix_applier)

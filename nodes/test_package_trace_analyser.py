@@ -1,3 +1,5 @@
+from nodes.package_trace_analyser import package_trace_analyser
+
+
 def test_package_trace_analyser_imports():
-    import nodes.package_trace_analyser as m
-    assert hasattr(m, "package_trace_analyser")
+    assert callable(package_trace_analyser)

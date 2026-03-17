@@ -1,0 +1,23 @@
+name: axiom-official/axiom-package-debugger
+version: 0.1.0
+language: python
+description: Debugs failed Axiom package tests by reading the debug event stream and generating fix instructions.
+author: Axiom Official
+license: MIT
+nodes:
+  - name: PackageDebugReader
+    input: TestResult
+    output: TestResult
+    description: Enriches a TestResult by fetching its debug event stream from the ingress and attaching the events as JSON in the output field.
+  - name: PackageTraceAnalyser
+    input: TestResult
+    output: AnalysisResult
+    description: Uses the LLM to analyse the enriched debug trace and determine root cause of the failure.
+    required_secrets:
+      - ANTHROPIC_API_KEY
+  - name: PackageFixApplier
+    input: AnalysisResult
+    output: AgentProgress
+    description: Routes fix instructions to the appropriate package builder sub-flow based on the analysis.
+imports:
+  - axiom-official/axiom-agent-messages

@@ -5,26 +5,28 @@ description: Debugs failed Axiom package tests by reading the debug event stream
 author: Axiom Official
 license: MIT
 nodes:
-  - name: PackageDebugReader
-    input: PackageBuildContext
-    output: PackageBuildContext
-    description: Enriches the context by fetching the debug event stream for the test execution and attaching the events as JSON.
-    required_secrets:
-      - AXIOM_API_KEY
-  - name: PackageTraceAnalyser
-    input: PackageBuildContext
-    output: PackageBuildContext
-    description: Uses the LLM to analyse the debug trace, populates has_error, fix_instructions, and error_summary.
-    required_secrets:
-      - ANTHROPIC_API_KEY
-  - name: PackageFixApplier
-    input: PackageBuildContext
-    output: AgentProgress
-    description: Routes fix instructions to the appropriate package builder sub-flow and returns an AgentProgress with the result.
+    - name: PackageDebugReader
+      description: Enriches the context by fetching the debug event stream for the test execution and attaching the events as JSON.
+      input: PackageBuildContext
+      output: PackageBuildContext
+      required_secrets:
+        - AXIOM_API_KEY
+    - name: PackageTraceAnalyser
+      description: Uses the LLM to analyse the debug trace, populates has_error, fix_instructions, and error_summary.
+      input: PackageBuildContext
+      output: PackageBuildContext
+      required_secrets:
+        - ANTHROPIC_API_KEY
+    - name: PackageFixApplier
+      description: Routes fix instructions to the appropriate package builder sub-flow and returns an AgentProgress with the result.
+      input: PackageBuildContext
+      output: AgentProgress
 imports:
-  - package: axiom-official/axiom-agent-messages
-    version: 0.1.0
-    messages:
-      - NodeSpec
-      - PackageBuildContext
-      - AgentProgress
+    - package: axiom-official/axiom-agent-messages
+      version: 0.1.0
+      messages:
+        - NodeSpec
+        - PackageBuildContext
+        - AgentProgress
+        - FlowBuildContext
+        - AgentRequest

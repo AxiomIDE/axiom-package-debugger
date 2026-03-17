@@ -17,7 +17,7 @@ def package_trace_analyser(log: AxiomLogger, secrets: AxiomSecrets, input: Packa
         input.error_summary = "No errors found"
         return input
 
-    api_key = secrets.get("ANTHROPIC_API_KEY")
+    api_key, _ = secrets.get("ANTHROPIC_API_KEY")
     client = anthropic.Anthropic(api_key=api_key)
 
     debug_events = ""
